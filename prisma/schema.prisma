@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  IN_PROGRESS
+  NOT_STARTED
+  TRANSLATED
+  OVERDUE
+}
+
+enum Role {
+  CUSTOMER
+  TRANSLATOR
+  ADMIN
+}
+
+model Tranlation {
+  id Int @id @default(autoincrement())
+  path String
+
+  orderId Int
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String?
+  surname  String?
+  role     Role
+
+  avatarPath String?
+
+  translator Translator?
+  customer   Customer?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id Int @id @default(autoincrement())
+
+  accountId Int     @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  orders Order[]
+}
+
+model Translator {
+  id Int @id @default(autoincrement())
+
+  accountId Int     @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  orders Order[]
+}
+
+model Order {
+  id              Int    @id @default(autoincrement())
+  title            String
+  status          Status
+  totalPages      Int
+  translatedPages Int
+
+  translatorId Int
+  customerId   Int
+
+  translator Translator @relation(fields: [translatorId], references: [id])
+  customer   Customer   @relation(fields: [customerId], references: [id])
+
+  startedAt  DateTime?
+  deadlineAt DateTime
+  finishedAt DateTime?
+
+  translations Tranlation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
